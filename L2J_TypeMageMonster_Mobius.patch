@@ -1,0 +1,111 @@
+diff --git java/org/l2jmobius/gameserver/ai/AttackableAI.java java/org/l2jmobius/gameserver/ai/AttackableAI.java
+index 41a52e7..76ca278 100644
+--- java/org/l2jmobius/gameserver/ai/AttackableAI.java
++++ java/org/l2jmobius/gameserver/ai/AttackableAI.java
+@@ -922,5 +922,5 @@
+ 		
+ 		// Cast skills.
+-		if ((!npc.isMoving() && npc.hasSkillChance()) || (npc.getAiType() == AIType.MAGE))
++		if ((!npc.isMoving() && npc.hasSkillChance()) || (npc.getAiType() == AIType.MAGE) || (npc.getAiType() == AIType.HEALER))
+ 		{
+ 			// First use the most important skill - heal. Even reconsider target.
+@@ -937,4 +937,8 @@
+ 						{
+ 							setTarget(healTarget);
++							if (npc.isMoving())
++							{
++								clientStopMoving(null);
++							}
+ 							npc.doCast(healSkill);
+ 							// LOGGER.finer(this + " used heal skill " + healSkill + " with target " + getTarget());
+@@ -955,4 +959,8 @@
+ 					{
+ 						setTarget(buffTarget);
++						if (npc.isMoving())
++						{
++							clientStopMoving(null);
++						}
+ 						npc.doCast(buffSkill);
+ 						// LOGGER.finer(this + " used buff skill " + buffSkill + " with target " + getTarget());
+@@ -968,4 +976,8 @@
+ 				if (SkillCaster.checkUseConditions(npc, immobolizeSkill) && checkSkillTarget(immobolizeSkill, target) && allowsParameterizedCast(npc, immobolizeSkill, target))
+ 				{
++					if (npc.isMoving())
++					{
++						clientStopMoving(null);
++					}
+ 					npc.doCast(immobolizeSkill);
+ 					// LOGGER.finer(this + " used immobolize skill " + immobolizeSkill + " with target " + getTarget());
+@@ -980,4 +992,8 @@
+ 				if (SkillCaster.checkUseConditions(npc, muteSkill) && checkSkillTarget(muteSkill, target) && allowsParameterizedCast(npc, muteSkill, target))
+ 				{
++					if (npc.isMoving())
++					{
++						clientStopMoving(null);
++					}
+ 					npc.doCast(muteSkill);
+ 					// LOGGER.finer(this + " used mute skill " + muteSkill + " with target " + getTarget());
+@@ -992,4 +1008,8 @@
+ 				if (SkillCaster.checkUseConditions(npc, shortRangeSkill) && checkSkillTarget(shortRangeSkill, target) && allowsParameterizedCast(npc, shortRangeSkill, target))
+ 				{
++					if (npc.isMoving())
++					{
++						clientStopMoving(null);
++					}
+ 					npc.doCast(shortRangeSkill);
+ 					// LOGGER.finer(this + " used short range skill " + shortRangeSkill + " with target " + getTarget());
+@@ -1004,4 +1024,8 @@
+ 				if (SkillCaster.checkUseConditions(npc, longRangeSkill) && checkSkillTarget(longRangeSkill, target) && allowsParameterizedCast(npc, longRangeSkill, target))
+ 				{
++					if (npc.isMoving())
++					{
++						clientStopMoving(null);
++					}
+ 					npc.doCast(longRangeSkill);
+ 					// LOGGER.finer(this + " used long range skill " + longRangeSkill + " with target " + getTarget());
+@@ -1016,4 +1040,8 @@
+ 				if (SkillCaster.checkUseConditions(npc, generalSkill) && checkSkillTarget(generalSkill, target) && allowsParameterizedCast(npc, generalSkill, target))
+ 				{
++					if (npc.isMoving())
++					{
++						clientStopMoving(null);
++					}
+ 					npc.doCast(generalSkill);
+ 					// LOGGER.finer(this + " used general skill " + generalSkill + " with target " + getTarget());
+@@ -1034,4 +1062,26 @@
+ 			range = 850 + combinedCollision; // Base bow range for NPCs.
+ 		}
++		else if ((npc.getAiType() == AIType.MAGE) || (npc.getAiType() == AIType.HEALER))
++		{
++			int maxCastRange = 0;
++			for (Skill sk : npc.getLongRangeSkills())
++			{
++				if (sk.getCastRange() > maxCastRange)
++				{
++					maxCastRange = sk.getCastRange();
++				}
++			}
++			if (maxCastRange == 0)
++			{
++				for (Skill sk : template.getAISkills(AISkillScope.GENERAL))
++				{
++					if (sk.getCastRange() > maxCastRange)
++					{
++						maxCastRange = sk.getCastRange();
++					}
++				}
++			}
++			range = (maxCastRange > 0 ? Math.max(150, maxCastRange - 100) : 500) + combinedCollision;
++		}
+ 		
+ 		if (npc.calculateDistance2D(target) > range)
+@@ -1052,4 +1102,9 @@
+ 		}
+ 		
++		if ((npc.getAiType() == AIType.MAGE) || (npc.getAiType() == AIType.HEALER))
++		{
++			return;
++		}
++		
+ 		// Attacks target.
+ 		_actor.doAutoAttack(target);
